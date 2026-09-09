@@ -11,11 +11,13 @@
 export const GOOGLE_CLIENT_ID =
   "445560845748-hrtgv126t22f0cmefpr2l5ksci70pohu.apps.googleusercontent.com";
 
-// Scope volontairement minimal : accès uniquement aux fichiers que l'app
-// crée ou que l'utilisateur lui ouvre explicitement — jamais à l'ensemble
-// du Drive de l'utilisateur.
-export const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file";
+// Scope volontairement minimal : "drive.file" limite l'app aux fichiers
+// qu'elle crée ou que l'utilisateur lui ouvre explicitement. "email" est
+// ajouté uniquement pour identifier le compte utilisé (pas d'accès
+// supplémentaire aux données) — voir auth.js pour pourquoi c'est
+// nécessaire (aligner le compte AWS sur le compte Drive).
+export const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file openid email";
 
 // À remplir une fois l'Identity Pool créé — voir aws-cognito-setup.md.
-export const COGNITO_IDENTITY_POOL_ID = "us-east-1:ff3c14ce-8f42-4541-bab8-ca51fa3f62b0"; // ex. "us-east-1:xxxxxxxx-xxxx-..."
+export const COGNITO_IDENTITY_POOL_ID = "us-east-1:ff3c14ce-8f42-4541-bab8-ca51fa3f62b0";
 export const AWS_REGION = "us-east-1";

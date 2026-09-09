@@ -11,7 +11,7 @@
   pour forcer la mise à jour du cache chez l'utilisateur.
 */
 
-const CACHE_VERSION = "gymcoach-shell-v3";
+const CACHE_VERSION = "gymcoach-shell-v4";
 
 const FICHIERS_APP_SHELL = [
   "./",
