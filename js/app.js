@@ -6,7 +6,8 @@
   viendront s'y brancher aux étapes suivantes.
 */
 
-import { initAuth, login, logout } from "./auth.js";
+import { initAuth, login, logout, getIdToken } from "./auth.js";
+import { obtenirAccesAws, effacerAccesAws } from "./cognito.js";
 
 // --- Enregistrement du service worker ---------------------------------
 
@@ -67,8 +68,43 @@ document.addEventListener("gymcoach:auth-changed", (evenement) => {
   appliquerEtatAuth(evenement.detail.etat);
 });
 
-btnLogin.addEventListener("click", login);
-btnLogout.addEventListener("click", logout);
+// --- Fédération AWS via Cognito -----------------------------------------
+// Déclenchée depuis le même clic que la connexion Google : on demande le
+// jeton d'identité (voir auth.js) et on l'échange contre des accès AWS.
+// Peut rester silencieusement en échec sans bloquer Drive/Sheets, qui ne
+// dépendent pas d'AWS — juste l'indicateur AWS reste sur "non connecté".
+
+const indicateurAws = document.getElementById("indicateur-aws");
+
+async function connecterAws() {
+  indicateurAws.dataset.state = "warn";
+
+  const jetonId = await getIdToken();
+  if (!jetonId) {
+    console.warn("[GymCoach] Jeton d'identité Google indisponible — AWS non connecté.");
+    indicateurAws.dataset.state = "error";
+    return;
+  }
+
+  try {
+    await obtenirAccesAws(jetonId);
+    indicateurAws.dataset.state = "ok";
+  } catch (erreur) {
+    console.error("[GymCoach] Échec de la fédération Cognito :", erreur);
+    indicateurAws.dataset.state = "error";
+  }
+}
+
+btnLogin.addEventListener("click", () => {
+  login();
+  connecterAws();
+});
+
+btnLogout.addEventListener("click", () => {
+  logout();
+  effacerAccesAws();
+  indicateurAws.dataset.state = "warn";
+});
 
 // initAuth() dépend de la variable globale `google`, chargée par le
 // script Google Identity Services référencé dans index.html avant ce

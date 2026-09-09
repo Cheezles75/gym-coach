@@ -70,16 +70,26 @@ dossier statique servi tel quel.
 
 ## Authentification Google
 
-✅ Fait — `js/auth.js` + `js/config.js`. Modèle "token client" de Google
-Identity Services : jeton géré en mémoire uniquement, jamais persisté,
-renouvelé en tâche de fond ~5 min avant expiration. Voir les commentaires
-en tête de `auth.js` pour le raisonnement complet (notamment pourquoi ça
-ne perturbe jamais une séance en cours).
+✅ Fait — `js/auth.js` + `js/config.js`. Deux jetons distincts obtenus
+depuis le même clic : un jeton d'accès (OAuth2, scope `drive.file`) pour
+Sheets/Drive, et un jeton d'identité (ID token) pour la fédération AWS.
+Le premier est géré en mémoire avec renouvellement proactif en tâche de
+fond ; le second est redemandé à la volée, sans minuteur, quand
+`cognito.js` en a besoin. Voir les commentaires en tête de `auth.js`
+pour le raisonnement complet.
 
 Client ID et détails de configuration : voir `google-oauth-setup.md`
-(dans le dossier racine du projet, hors de ce dépôt de code).
+(dossier racine du projet, hors dépôt de code).
+
+## Fédération AWS (Cognito)
+
+✅ Fait — `js/cognito.js`. Échange le jeton d'identité Google contre des
+accès AWS temporaires (1h) via l'API HTTP de Cognito Identity, en fetch()
+brut — pas de SDK AWS ni de dépendance CDN pour cette étape. `COGNITO_IDENTITY_POOL_ID`
+dans `js/config.js` est à renseigner après avoir suivi
+`aws-cognito-setup.md`.
 
 ## Prochaine étape
 
-Fédération Cognito Identity Pool — brancher l'identité Google sur AWS
-pour les appels Bedrock/Polly/Transcribe.
+Modules Bedrock, Polly et Transcribe — ils consommeront les accès AWS
+exposés par `cognito.js` pour signer leurs appels (SigV4).

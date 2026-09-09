@@ -11,7 +11,7 @@
   pour forcer la mise à jour du cache chez l'utilisateur.
 */
 
-const CACHE_VERSION = "gymcoach-shell-v2";
+const CACHE_VERSION = "gymcoach-shell-v3";
 
 const FICHIERS_APP_SHELL = [
   "./",
@@ -24,6 +24,7 @@ const FICHIERS_APP_SHELL = [
   "./js/app.js",
   "./js/config.js",
   "./js/auth.js",
+  "./js/cognito.js",
 ];
 
 self.addEventListener("install", (evenement) => {
