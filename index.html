@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GymCoach</title>
+  <meta name="description" content="Suivi personnel de musculation — routines, séances, progression." />
+  <meta name="theme-color" content="#edeae2" />
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Polices : chargées depuis Google Fonts (gratuit, pas d'hébergement à gérer) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- Barre de statut & de commande — voir specifications.md §3.8.
+         Les indicateurs sont statiques pour l'instant, ils seront reliés
+         à l'état réel (auth Google, AWS, sync...) dans une étape suivante. -->
+    <header class="statusbar">
+      <span class="statusbar__brand">GymCoach</span>
+
+      <div class="statusbar__indicators">
+        <span class="indicator" title="Compte Google">
+          <span class="indicator__dot" id="indicateur-google" data-state="warn"></span>
+          <span id="libelle-google">Google</span>
+        </span>
+        <span class="indicator" title="AWS">
+          <span class="indicator__dot" data-state="warn"></span>
+          AWS
+        </span>
+        <span class="indicator" title="Synchronisation">
+          <span class="indicator__dot" data-state="ok"></span>
+          Sync
+        </span>
+      </div>
+
+      <div class="statusbar__controls">
+        <button class="control-toggle" aria-pressed="false" title="Microphone" aria-label="Activer le microphone">🎙️</button>
+        <button class="control-toggle" aria-pressed="false" title="Voix du coach" aria-label="Activer la voix du coach">🔊</button>
+        <button class="control-toggle" aria-pressed="false" title="Suggestions IA" aria-label="Activer les suggestions IA">🤖</button>
+        <button class="control-toggle" title="Changer de langue" aria-label="Passer en anglais">FR</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+
+      <!-- Navigation principale : sidebar sur grand écran, tabbar en bas sur mobile.
+           Le même contenu de liens est dupliqué dans les deux, affiché/masqué en CSS. -->
+      <nav class="sidebar" aria-label="Navigation principale">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#" aria-current="page">🏠 Tableau de bord</a></li>
+          <li><a class="nav-link" href="#">📋 Routines</a></li>
+          <li><a class="nav-link" href="#">🏋️ Séance</a></li>
+          <li><a class="nav-link" href="#">📈 Progression</a></li>
+          <li><a class="nav-link" href="#">📍 Lieux</a></li>
+          <li><a class="nav-link" href="#">⚙️ Réglages</a></li>
+        </ul>
+      </nav>
+
+      <main class="main">
+        <div class="main-inner">
+          <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-6);">
+            Tableau de bord
+          </h1>
+
+          <div class="dashboard-grid">
+            <section class="card" id="carte-connexion-google">
+              <p class="card__title">Compte Google</p>
+              <p id="statut-connexion-google" style="margin-bottom: var(--space-3);">Non connecté</p>
+              <button class="btn btn--primary" id="btn-google-login">Se connecter à Google</button>
+              <button class="btn btn--ghost" id="btn-google-logout" style="display: none;">Se déconnecter</button>
+            </section>
+
+            <section class="card">
+              <p class="card__title">Prochaine séance</p>
+              <p style="font-size: var(--text-lg);">Aucune routine active pour l'instant</p>
+            </section>
+
+            <section class="card">
+              <p class="card__title">Dernière séance</p>
+              <span class="card__figure">—</span>
+              <span class="card__unit">jours</span>
+            </section>
+
+            <section class="card">
+              <p class="card__title">Séries cette semaine</p>
+              <span class="card__figure">0</span>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Navigation mobile -->
+    <nav class="tabbar" aria-label="Navigation principale">
+      <ul class="nav-list">
+        <li><a class="nav-link" href="#" aria-current="page">🏠<span>Accueil</span></a></li>
+        <li><a class="nav-link" href="#">📋<span>Routines</span></a></li>
+        <li><a class="nav-link" href="#">🏋️<span>Séance</span></a></li>
+        <li><a class="nav-link" href="#">📈<span>Progrès</span></a></li>
+        <li><a class="nav-link" href="#">⚙️<span>Réglages</span></a></li>
+      </ul>
+    </nav>
+
+  </div>
+
+  <!-- Google Identity Services : doit être chargé avant js/app.js, qui
+       initialise l'authentification dès son démarrage (voir auth.js).
+       Un script classique en "defer" s'exécute avant les scripts "module",
+       donc l'ordre ci-dessous garantit que `google` existe à temps. -->
+  <script src="https://accounts.google.com/gsi/client" defer></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

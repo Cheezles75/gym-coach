@@ -1,0 +1,62 @@
+/*
+  variables.css — Jetons de design GymCoach
+  ------------------------------------------
+  Palette inspirée de l'univers de la salle de sport : encre, pierre,
+  mousse/chalk. Toute couleur ou typo utilisée ailleurs dans l'app doit
+  passer par une variable définie ici — jamais de valeur en dur.
+*/
+
+:root {
+  /* Couleurs de base */
+  --ink: #1c2321;           /* texte principal, quasi-noir à dominante verte */
+  --ink-soft: #4a534f;      /* texte secondaire */
+  --paper: #edeae2;         /* fond principal, pierre claire */
+  --paper-raised: #f7f5f0;  /* fond des surfaces élevées (cartes, barres) */
+  --accent: #6b7f5b;        /* mousse — actions principales, éléments actifs */
+  --accent-dark: #46543c;   /* survol / pressé */
+  --accent-soft: #dfe6d8;   /* fonds teintés très légers (badges, sélection) */
+  --alert: #b5482d;         /* erreurs, alertes critiques */
+  --alert-soft: #f3ddd5;    /* fond des messages d'erreur non intrusifs */
+  --warn: #a9822f;          /* avertissements (ex. jeton bientôt expiré) */
+  --line: #d8d3c8;          /* hairlines, séparateurs */
+  --line-soft: #e6e2d8;     /* séparateurs très discrets */
+
+  /* Typographie */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+
+  /* Espacements (échelle 4px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Rayons — un seul rayon assumé, pas un arrondi générique sur tout */
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  /* Largeur max du contenu sur très grand écran, pour ne pas étirer
+     le texte à l'infini tout en exploitant l'espace disponible */
+  --content-max: 1600px;
+
+  /* Hauteur de la barre de statut/commande (voir specifications.md §3.8) */
+  --statusbar-height: 48px;
+  /* Hauteur de la navigation mobile en bas */
+  --tabbar-height: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Prévu pour plus tard : un vrai thème sombre travaillé, pas juste
+     une inversion automatique. Pour l'instant on reste en clair partout. */
+}
