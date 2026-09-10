@@ -7,24 +7,30 @@
     sert à appeler directement les API Google Sheets/Drive.
   - Le JETON D'IDENTITÉ (ID token, "Sign in with Google") : un JWT qui
     prouve qui est l'utilisateur. C'est CELUI-LÀ que Cognito Identity
-    Pool exige pour fédérer l'identité Google vers des accès AWS — le
-    jeton d'accès ne fonctionne pas pour ça, AWS le refuse.
+    Pool exige pour fédérer l'identité Google vers des accès AWS.
 
   Les deux vivent en mémoire uniquement, jamais persistés. Le jeton
   d'accès est renouvelé proactivement en tâche de fond ; le jeton
   d'identité est redemandé à la volée quand cognito.js en a besoin.
 
-  PROBLÈME CONSTATÉ À L'USAGE ET CORRIGÉ ICI : le sélecteur de compte du
-  "One Tap" Google (jeton d'identité) est indépendant de celui utilisé
-  pour le jeton d'accès — si plusieurs comptes Google sont connectés dans
-  le navigateur, rien ne garantit qu'il choisisse le même compte que
-  Drive/Sheets. Deux mesures pour empêcher ça :
-  1. On mémorise l'email du compte ayant autorisé Drive (via l'endpoint
-     userinfo), et on le passe en `login_hint` au One Tap pour orienter
-     son choix par défaut vers ce compte.
-  2. Après coup, on vérifie que l'email du jeton d'identité reçu
-     correspond bien à celui du jeton d'accès — sinon, on rejette le
-     jeton d'identité plutôt que de fédérer AWS sur le mauvais compte.
+  DEUX PROBLÈMES CONSTATÉS À L'USAGE, CORRIGÉS ICI :
+
+  1. Compte différent entre Drive et AWS : le sélecteur de compte du
+     "One Tap" est indépendant de celui du jeton d'accès. On mémorise
+     l'email du compte Drive (via l'endpoint userinfo), on le passe en
+     `login_hint` pour orienter le One Tap, ET on vérifie après coup que
+     l'email du jeton d'identité reçu correspond — sinon on le rejette
+     plutôt que de fédérer AWS sur le mauvais compte.
+
+  2. "One Tap" qui ne réapparaît plus après un premier échec : Google
+     applique un temps de repos anti-spam après une tentative fermée/non
+     affichée (FedCM), sans le dire clairement — d'où le blocage observé
+     nécessitant une déconnexion complète. La fonction prompt() accepte
+     un callback de "notification de moment" qui permet justement de
+     détecter ce cas (isNotDisplayed / isSkippedMoment) : on l'utilise
+     pour prévenir app.js, qui affiche alors un vrai bouton Google
+     ("Sign in with Google" rendu, pas le One Tap automatique) — un clic
+     explicite sur ce bouton n'est pas soumis au même temps de repos.
 */
 
 import { GOOGLE_CLIENT_ID, GOOGLE_SCOPES } from "./config.js";
@@ -36,7 +42,8 @@ let jetonAccesActuel = null; // { accessToken, expiresAt, email } | null
 let minuteurRenouvellement = null;
 
 let jetonIdActuel = null;    // { idToken, expiresAt } | null
-let resolveProchainJetonId = null; // callback en attente d'un jeton d'identité frais
+let resolveProchainJetonId = null;
+let rejectProchainJetonId = null;
 
 /**
  * Diffuse un changement d'état de connexion Google (jeton d'accès) au
@@ -60,9 +67,8 @@ function planifierRenouvellement(expiresInSecondes) {
 
 /**
  * Décode le corps (payload) d'un JWT sans dépendance externe. On ne
- * vérifie pas la signature ici — ce n'est pas notre rôle, c'est
- * Cognito/AWS qui la vérifie à réception — on lit juste des claims
- * publics du jeton (exp, email...).
+ * vérifie pas la signature — ce n'est pas notre rôle, Cognito/AWS la
+ * vérifie à réception — on lit juste des claims publics (exp, email...).
  */
 function decoderPayloadJwt(jwt) {
   const partieCentrale = jwt.split(".")[1];
@@ -70,8 +76,8 @@ function decoderPayloadJwt(jwt) {
 }
 
 /**
- * Récupère l'email associé au jeton d'accès, pour pouvoir orienter le
- * One Tap vers le même compte (voir en-tête du fichier).
+ * Récupère l'email associé au jeton d'accès, pour orienter le One Tap
+ * vers le même compte (voir en-tête du fichier, point 1).
  */
 async function recupererEmailCompte(accessToken) {
   try {
@@ -109,27 +115,26 @@ async function surReponseJetonAcces(reponse) {
 
 function surReponseJetonId(reponse) {
   if (!reponse || !reponse.credential) {
-    console.warn("[GymCoach] Aucun jeton d'identité Google reçu (One Tap non confirmé).");
-    if (resolveProchainJetonId) {
-      resolveProchainJetonId(null);
+    if (rejectProchainJetonId) {
+      rejectProchainJetonId(new Error("non_confirme"));
       resolveProchainJetonId = null;
+      rejectProchainJetonId = null;
     }
     return;
   }
 
   const payload = decoderPayloadJwt(reponse.credential);
 
-  // Garde-fou : si l'utilisateur a choisi un autre compte que celui
-  // utilisé pour Drive (malgré le login_hint), on refuse ce jeton
-  // plutôt que de fédérer AWS sur la mauvaise identité.
+  // Garde-fou : compte différent de celui utilisé pour Drive malgré le
+  // login_hint (l'utilisateur a cliqué "utiliser un autre compte").
   if (jetonAccesActuel?.email && payload.email !== jetonAccesActuel.email) {
-    console.warn(
-      `[GymCoach] Compte du jeton d'identité (${payload.email}) différent du compte Drive (${jetonAccesActuel.email}) — jeton rejeté.`
-    );
     jetonIdActuel = null;
-    if (resolveProchainJetonId) {
-      resolveProchainJetonId(null);
+    if (rejectProchainJetonId) {
+      rejectProchainJetonId(
+        new Error(`compte_different:${payload.email}:${jetonAccesActuel.email}`)
+      );
       resolveProchainJetonId = null;
+      rejectProchainJetonId = null;
     }
     return;
   }
@@ -142,13 +147,14 @@ function surReponseJetonId(reponse) {
   if (resolveProchainJetonId) {
     resolveProchainJetonId(jetonIdActuel.idToken);
     resolveProchainJetonId = null;
+    rejectProchainJetonId = null;
   }
 }
 
 /**
  * Initialise le client OAuth2 (jeton d'accès). L'initialisation du One
- * Tap (jeton d'identité) se fait juste avant chaque prompt() — voir
- * getIdToken() — pour pouvoir y injecter le login_hint à jour.
+ * Tap se fait juste avant chaque prompt() — voir getIdToken() — pour
+ * pouvoir y injecter le login_hint à jour.
  */
 export function initAuth() {
   clientJeton = google.accounts.oauth2.initTokenClient({
@@ -194,15 +200,17 @@ export function estConnecte() {
 }
 
 /**
- * Jeton d'identité valide (pour Cognito), redemandé à Google si besoin,
- * orienté vers le même compte que celui utilisé pour Drive (login_hint)
- * et vérifié après coup (voir en-tête du fichier). PEUT déclencher une
- * interaction visible (One Tap) — à n'appeler que suite à une action
- * explicite de l'utilisateur.
+ * Jeton d'identité valide (pour Cognito), redemandé à Google si besoin.
+ * PEUT déclencher une interaction visible (One Tap) — à n'appeler que
+ * suite à une action explicite de l'utilisateur.
  *
- * @returns {Promise<string|null>} le jeton d'identité, ou null si Google
- *   n'a pas pu le confirmer, ou si le compte choisi ne correspond pas
- *   à celui de Drive.
+ * @returns {Promise<string>} le jeton d'identité.
+ * @throws {Error} avec pour message :
+ *   - "non_confirme" : One Tap affiché mais fermé sans choix
+ *   - "compte_different:<reçu>:<attendu>" : mauvais compte choisi
+ *   - "onetap_indisponible" : One Tap non affichable (repos anti-spam,
+ *     cookies tiers bloqués...) — app.js doit alors proposer le bouton
+ *     Google explicite via renderBoutonSecours()
  */
 export function getIdToken() {
   const margeMs = 60 * 1000;
@@ -210,13 +218,42 @@ export function getIdToken() {
     return Promise.resolve(jetonIdActuel.idToken);
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     resolveProchainJetonId = resolve;
+    rejectProchainJetonId = reject;
+
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: surReponseJetonId,
       login_hint: jetonAccesActuel?.email ?? undefined,
     });
-    google.accounts.id.prompt();
+
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        if (rejectProchainJetonId) {
+          rejectProchainJetonId(new Error("onetap_indisponible"));
+          resolveProchainJetonId = null;
+          rejectProchainJetonId = null;
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Affiche le bouton Google natif ("Sign in with Google") dans le
+ * conteneur fourni — repli fiable quand le One Tap automatique ne peut
+ * pas s'afficher. Réutilise le login_hint/callback déjà configurés par
+ * le dernier getIdToken(). Un clic dessus déclenche le même callback
+ * surReponseJetonId, donc la Promise en attente se résout normalement.
+ */
+export function renderBoutonSecours(conteneur) {
+  google.accounts.id.renderButton(conteneur, {
+    type: "standard",
+    theme: "outline",
+    size: "large",
+    shape: "pill",
+    text: "signin_with",
+    logo_alignment: "left",
   });
 }
