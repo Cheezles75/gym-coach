@@ -2,12 +2,12 @@
   app.js — Point d'entrée de l'application
   -------------------------------------------
   Fondations transversales (service worker, erreurs globales) + câblage
-  de l'authentification Google. Les modules IndexedDB, Sheets, etc.
-  viendront s'y brancher aux étapes suivantes.
+  de l'authentification Google et de la connectivité Lambda. Les modules
+  IndexedDB, Sheets, etc. viendront s'y brancher aux étapes suivantes.
 */
 
-import { initAuth, login, logout, getIdToken, renderBoutonSecours } from "./auth.js";
-import { obtenirAccesAws, effacerAccesAws } from "./cognito.js";
+import { initAuth, login, logout, getAccessToken } from "./auth.js";
+import { verifierConnexionLambda } from "./lambda.js";
 
 // --- Enregistrement du service worker ---------------------------------
 
@@ -80,82 +80,47 @@ function appliquerEtatAuth(etat) {
 
 document.addEventListener("gymcoach:auth-changed", (evenement) => {
   appliquerEtatAuth(evenement.detail.etat);
+  // Le même jeton sert pour Lambda — dès que Google est connecté, on
+  // vérifie que la Lambda l'accepte aussi (voir plus bas).
+  if (evenement.detail.etat === "connecte") {
+    verifierAws();
+  } else {
+    indicateurAws.dataset.state = "warn";
+  }
 });
 
-// --- Fédération AWS via Cognito -----------------------------------------
-// Déclenchée depuis le même clic que la connexion Google : on demande le
-// jeton d'identité (voir auth.js) et on l'échange contre des accès AWS.
-// Peut rester en échec sans bloquer Drive/Sheets, qui ne dépendent pas
-// d'AWS — mais contrairement à avant, l'échec est maintenant explicite
-// (toast) et, dans le cas le plus courant (One Tap indisponible), un
-// vrai bouton Google apparaît pour débloquer la situation sans avoir à
-// se déconnecter/reconnecter complètement.
+// --- Connectivité Lambda (AWS) -------------------------------------------
+// Beaucoup plus simple qu'avec Cognito : un seul jeton (celui de Drive),
+// aucun échange côté navigateur, aucun accès AWS à stocker ici. On se
+// contente de vérifier que la Lambda accepte ce jeton, pour piloter
+// l'indicateur "AWS" de la barre de statut.
 
 const indicateurAws = document.getElementById("indicateur-aws");
-const secoursGoogleId = document.getElementById("secours-google-id");
-const conteneurBoutonGoogle = document.getElementById("conteneur-bouton-google");
 
-function cacherSecoursGoogle() {
-  secoursGoogleId.style.display = "none";
-  conteneurBoutonGoogle.innerHTML = "";
-}
-
-function afficherSecoursGoogle() {
-  secoursGoogleId.style.display = "";
-  conteneurBoutonGoogle.innerHTML = "";
-  renderBoutonSecours(conteneurBoutonGoogle);
-}
-
-const MESSAGES_ERREUR_AWS = {
-  non_confirme: "Connexion AWS annulée — confirme avec le bouton Google ci-dessous.",
-  onetap_indisponible: "Confirme ta connexion AWS avec le bouton Google ci-dessous.",
-};
-
-function messageErreurAws(erreur) {
-  if (erreur.message.startsWith("compte_different:")) {
-    const [, recu] = erreur.message.split(":");
-    return `AWS connecté avec ${recu}, différent de ton compte Drive — reconnecte-toi avec le même compte.`;
-  }
-  return MESSAGES_ERREUR_AWS[erreur.message]
-    ?? "Échec de la connexion AWS — réessaie dans un instant.";
-}
-
-async function connecterAws() {
+async function verifierAws() {
   indicateurAws.dataset.state = "warn";
-  cacherSecoursGoogle();
 
-  let jetonId;
-  try {
-    jetonId = await getIdToken();
-  } catch (erreur) {
-    console.warn("[GymCoach] Échec d'obtention du jeton d'identité Google :", erreur.message);
+  const jeton = getAccessToken();
+  if (!jeton) {
     indicateurAws.dataset.state = "error";
-    afficherToast(messageErreurAws(erreur));
-    afficherSecoursGoogle();
     return;
   }
 
   try {
-    await obtenirAccesAws(jetonId);
+    await verifierConnexionLambda(jeton);
     indicateurAws.dataset.state = "ok";
-    cacherSecoursGoogle();
   } catch (erreur) {
-    console.error("[GymCoach] Échec de la fédération Cognito :", erreur);
+    console.error("[GymCoach] Échec de connexion à la Lambda :", erreur);
     indicateurAws.dataset.state = "error";
-    afficherToast("Échec de la connexion AWS (Cognito) — réessaie dans un instant.");
+    afficherToast("Échec de la connexion au serveur GymCoach — réessaie dans un instant.");
   }
 }
 
-btnLogin.addEventListener("click", () => {
-  login();
-  connecterAws();
-});
+btnLogin.addEventListener("click", login);
 
 btnLogout.addEventListener("click", () => {
   logout();
-  effacerAccesAws();
   indicateurAws.dataset.state = "warn";
-  cacherSecoursGoogle();
 });
 
 // initAuth() dépend de la variable globale `google`, chargée par le

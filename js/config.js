@@ -1,23 +1,22 @@
 /*
   config.js — Configuration publique de l'app
   ----------------------------------------------
-  Aucune valeur ici n'est un secret : le Client ID OAuth et l'Identity
-  Pool ID sont des identifiants publics, leur sécurité vient des
+  Aucune valeur ici n'est un secret : le Client ID OAuth et l'URL de la
+  fonction Lambda sont des identifiants publics, leur sécurité vient des
   restrictions configurées côté Google Cloud / AWS (origines autorisées,
-  scope des rôles IAM), pas de leur confidentialité. Tout peut rester en
-  clair dans un fichier versionné sur un dépôt public.
+  vérification du jeton dans la Lambda), pas de leur confidentialité.
+  Tout peut rester en clair dans un fichier versionné sur un dépôt public.
 */
 
 export const GOOGLE_CLIENT_ID =
   "445560845748-hrtgv126t22f0cmefpr2l5ksci70pohu.apps.googleusercontent.com";
 
-// Scope volontairement minimal : "drive.file" limite l'app aux fichiers
-// qu'elle crée ou que l'utilisateur lui ouvre explicitement. "email" est
-// ajouté uniquement pour identifier le compte utilisé (pas d'accès
-// supplémentaire aux données) — voir auth.js pour pourquoi c'est
-// nécessaire (aligner le compte AWS sur le compte Drive).
+// Scope minimal : "drive.file" limite l'app aux fichiers qu'elle crée ou
+// que l'utilisateur lui ouvre explicitement. "email" identifie le compte
+// (nécessaire pour que la Lambda vérifie que c'est bien toi) — voir
+// aws-lambda-setup.md.
 export const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file openid email";
 
-// À remplir une fois l'Identity Pool créé — voir aws-cognito-setup.md.
-export const COGNITO_IDENTITY_POOL_ID = "us-east-1:ff3c14ce-8f42-4541-bab8-ca51fa3f62b0";
-export const AWS_REGION = "us-east-1";
+// À remplir une fois la fonction Lambda créée — voir aws-lambda-setup.md.
+// Format : https://xxxxxxxxxxxxxxxxxxxxxxxxxx.lambda-url.us-east-1.on.aws/
+export const LAMBDA_FUNCTION_URL = "https://r7lladok5qept7hd7apvfermly0iztrx.lambda-url.us-east-1.on.aws/";

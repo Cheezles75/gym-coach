@@ -70,26 +70,38 @@ dossier statique servi tel quel.
 
 ## Authentification Google
 
-✅ Fait — `js/auth.js` + `js/config.js`. Deux jetons distincts obtenus
-depuis le même clic : un jeton d'accès (OAuth2, scope `drive.file`) pour
-Sheets/Drive, et un jeton d'identité (ID token) pour la fédération AWS.
-Le premier est géré en mémoire avec renouvellement proactif en tâche de
-fond ; le second est redemandé à la volée, sans minuteur, quand
-`cognito.js` en a besoin. Voir les commentaires en tête de `auth.js`
-pour le raisonnement complet.
+✅ Fait — `js/auth.js` + `js/config.js`. Un seul jeton (OAuth2, scope
+`drive.file` + `email`), utilisé à la fois pour Sheets/Drive côté
+navigateur et, en Bearer token, pour la fonction Lambda. Géré en mémoire,
+renouvelé proactivement en tâche de fond. Version simplifiée par rapport
+à une itération précédente qui utilisait aussi un jeton d'identité
+séparé (One Tap) pour Cognito — abandonné, voir plus bas.
 
 Client ID et détails de configuration : voir `google-oauth-setup.md`
 (dossier racine du projet, hors dépôt de code).
 
-## Fédération AWS (Cognito)
+## Backend AWS (Lambda — remplace Cognito)
 
-✅ Fait — `js/cognito.js`. Échange le jeton d'identité Google contre des
-accès AWS temporaires (1h) via l'API HTTP de Cognito Identity, en fetch()
-brut — pas de SDK AWS ni de dépendance CDN pour cette étape. `COGNITO_IDENTITY_POOL_ID`
-dans `js/config.js` est à renseigner après avoir suivi
-`aws-cognito-setup.md`.
+✅ Fait — `js/lambda.js`. Le jeton d'accès Google part en Bearer token
+vers une fonction Lambda, qui le revérifie côté serveur (endpoint
+`tokeninfo` de Google) avant d'assumer son propre rôle IAM d'exécution
+pour parler à Bedrock/Polly/Transcribe. Aucun secret AWS, aucun échange
+de jeton, ne transite plus par le navigateur.
+
+**Changement d'architecture (11/09/2026)** : l'approche précédente
+(Cognito Identity Pool + fédération Google) est abandonnée — le "One
+Tap" Google nécessaire pour obtenir un jeton d'identité s'est montré
+peu fiable en usage réel (temps de repos anti-spam après un échec,
+demandant une déconnexion complète pour réessayer). La Lambda est plus
+simple, moins chère à l'usage (4×2h/semaine tient largement dans le
+free tier permanent de Lambda), et n'a même plus besoin d'un second
+jeton Google.
+
+Configuration complète : voir `aws-lambda-setup.md` et
+`lambda-gymcoach-index.mjs` (dossier racine du projet).
 
 ## Prochaine étape
 
-Modules Bedrock, Polly et Transcribe — ils consommeront les accès AWS
-exposés par `cognito.js` pour signer leurs appels (SigV4).
+Une fois `LAMBDA_FUNCTION_URL` renseigné dans `js/config.js` et testé :
+écrire les vrais appels Bedrock/Polly/Transcribe dans la Lambda (le
+squelette actuel ne fait qu'une vérification de connectivité).
