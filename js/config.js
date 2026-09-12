@@ -27,4 +27,4 @@ export const LAMBDA_FUNCTION_URL = "https://r7lladok5qept7hd7apvfermly0iztrx.lam
 // la V1 tourne en usage réel. À incrémenter à chaque déploiement, EN
 // MÊME TEMPS que CACHE_VERSION dans service-worker.js — les deux doivent
 // toujours avancer ensemble.
-export const APP_VERSION = "0.8";
+export const APP_VERSION = "0.9";

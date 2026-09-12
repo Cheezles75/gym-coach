@@ -9,6 +9,9 @@
 import { initAuth, login, logout, getAccessToken } from "./auth.js";
 import { verifierConnexionLambda } from "./lambda.js";
 import { APP_VERSION } from "./config.js";
+import { afficherToast } from "./ui.js";
+import { enregistrerVue, demarrerRouteur } from "./router.js";
+import { initVueRoutines } from "./vues/routines.js";
 
 // --- Enregistrement du service worker ---------------------------------
 
@@ -44,18 +47,8 @@ console.info("[GymCoach] Scaffolding chargé.");
 document.getElementById("version-tag").textContent = `v${APP_VERSION}`;
 
 // --- Toast (messages non intrusifs, §11 des specs) ----------------------
-
-const elementToast = document.getElementById("toast");
-let minuteurToast = null;
-
-function afficherToast(message, dureeMs = 6000) {
-  clearTimeout(minuteurToast);
-  elementToast.textContent = message;
-  elementToast.hidden = false;
-  minuteurToast = setTimeout(() => {
-    elementToast.hidden = true;
-  }, dureeMs);
-}
+// Déplacé dans ui.js pour être réutilisable par les autres modules
+// (notamment les vues) — voir l'import en haut de ce fichier.
 
 // --- Authentification Google --------------------------------------------
 
@@ -87,6 +80,13 @@ document.addEventListener("gymcoach:auth-changed", (evenement) => {
   // vérifie que la Lambda l'accepte aussi (voir plus bas).
   if (evenement.detail.etat === "connecte") {
     verifierAws();
+    // Si on vient de se connecter alors qu'on est déjà sur l'écran
+    // Routines (qui affichait jusqu'ici une invite à se connecter), on
+    // relance son initialisation pour charger les données maintenant
+    // accessibles — sans attendre un changement de vue.
+    if (location.hash === "#routines") {
+      initVueRoutines();
+    }
   } else {
     indicateurAws.dataset.state = "warn";
   }
@@ -131,3 +131,9 @@ btnLogout.addEventListener("click", () => {
 // module (voir le commentaire à cet endroit pour la garantie d'ordre).
 initAuth();
 appliquerEtatAuth("deconnecte");
+
+// --- Navigation entre vues ------------------------------------------------
+
+enregistrerVue("dashboard");
+enregistrerVue("routines", initVueRoutines);
+demarrerRouteur();

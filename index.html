@@ -40,7 +40,7 @@
           AWS
         </span>
         <span class="indicator" title="Synchronisation">
-          <span class="indicator__dot" data-state="ok"></span>
+          <span class="indicator__dot" id="indicateur-sync" data-state="ok"></span>
           Sync
         </span>
       </div>
@@ -59,8 +59,8 @@
            Le même contenu de liens est dupliqué dans les deux, affiché/masqué en CSS. -->
       <nav class="sidebar" aria-label="Navigation principale">
         <ul class="nav-list">
-          <li><a class="nav-link" href="#" aria-current="page">🏠 Tableau de bord</a></li>
-          <li><a class="nav-link" href="#">📋 Routines</a></li>
+          <li><a class="nav-link" href="#dashboard" data-cible="dashboard" aria-current="page">🏠 Tableau de bord</a></li>
+          <li><a class="nav-link" href="#routines" data-cible="routines">📋 Routines</a></li>
           <li><a class="nav-link" href="#">🏋️ Séance</a></li>
           <li><a class="nav-link" href="#">📈 Progression</a></li>
           <li><a class="nav-link" href="#">📍 Lieux</a></li>
@@ -70,34 +70,46 @@
 
       <main class="main">
         <div class="main-inner">
-          <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-6);">
-            Tableau de bord
-          </h1>
 
-          <div class="dashboard-grid">
-            <section class="card" id="carte-connexion-google">
-              <p class="card__title">Compte Google</p>
-              <p id="statut-connexion-google" style="margin-bottom: var(--space-3);">Non connecté</p>
-              <button class="btn btn--primary" id="btn-google-login">Se connecter à Google</button>
-              <button class="btn btn--ghost" id="btn-google-logout" style="display: none;">Se déconnecter</button>
-            </section>
+          <section data-vue="dashboard">
+            <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-6);">
+              Tableau de bord
+            </h1>
 
-            <section class="card">
-              <p class="card__title">Prochaine séance</p>
-              <p style="font-size: var(--text-lg);">Aucune routine active pour l'instant</p>
-            </section>
+            <div class="dashboard-grid">
+              <section class="card" id="carte-connexion-google">
+                <p class="card__title">Compte Google</p>
+                <p id="statut-connexion-google" style="margin-bottom: var(--space-3);">Non connecté</p>
+                <button class="btn btn--primary" id="btn-google-login">Se connecter à Google</button>
+                <button class="btn btn--ghost" id="btn-google-logout" style="display: none;">Se déconnecter</button>
+              </section>
 
-            <section class="card">
-              <p class="card__title">Dernière séance</p>
-              <span class="card__figure">—</span>
-              <span class="card__unit">jours</span>
-            </section>
+              <section class="card">
+                <p class="card__title">Prochaine séance</p>
+                <p style="font-size: var(--text-lg);">Aucune routine active pour l'instant</p>
+              </section>
 
-            <section class="card">
-              <p class="card__title">Séries cette semaine</p>
-              <span class="card__figure">0</span>
-            </section>
-          </div>
+              <section class="card">
+                <p class="card__title">Dernière séance</p>
+                <span class="card__figure">—</span>
+                <span class="card__unit">jours</span>
+              </section>
+
+              <section class="card">
+                <p class="card__title">Séries cette semaine</p>
+                <span class="card__figure">0</span>
+              </section>
+            </div>
+          </section>
+
+          <section data-vue="routines" hidden>
+            <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-6);">
+              Routines
+            </h1>
+            <!-- Rempli dynamiquement par js/vues/routines.js -->
+            <div id="conteneur-routines"></div>
+          </section>
+
         </div>
       </main>
     </div>
@@ -105,8 +117,8 @@
     <!-- Navigation mobile -->
     <nav class="tabbar" aria-label="Navigation principale">
       <ul class="nav-list">
-        <li><a class="nav-link" href="#" aria-current="page">🏠<span>Accueil</span></a></li>
-        <li><a class="nav-link" href="#">📋<span>Routines</span></a></li>
+        <li><a class="nav-link" href="#dashboard" data-cible="dashboard" aria-current="page">🏠<span>Accueil</span></a></li>
+        <li><a class="nav-link" href="#routines" data-cible="routines">📋<span>Routines</span></a></li>
         <li><a class="nav-link" href="#">🏋️<span>Séance</span></a></li>
         <li><a class="nav-link" href="#">📈<span>Progrès</span></a></li>
         <li><a class="nav-link" href="#">⚙️<span>Réglages</span></a></li>

@@ -204,3 +204,172 @@
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
 }
+
+.texte-discret {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* --- Vue "Routines" (specifications.md §3.1) ---------------------------- */
+
+/* Une seule colonne empilée sur mobile — la liste, puis le détail juste en
+   dessous ; deux colonnes côte à côte à partir de 900px, comme le reste de
+   la mise en page (voir layout.css). */
+.vue-routines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (min-width: 900px) {
+  .vue-routines {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .panneau-liste {
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  .panneau-detail {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.panneau-liste__entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.panneau-liste__titre,
+.panneau-detail__titre {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.liste-cartes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.carte-selectionnable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+}
+
+.carte-selectionnable--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.carte-selectionnable__titre {
+  font-weight: 500;
+  font-size: var(--text-sm);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.badge {
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--ink-soft);
+}
+
+.badge--ok { background: var(--accent-soft); color: var(--accent-dark); }
+.badge--warn { background: #f1ead8; color: var(--warn); }
+.badge--neutre { background: var(--line-soft); color: var(--ink-soft); }
+
+.carte {
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  margin-bottom: var(--space-2);
+}
+
+.carte__entete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+/* --- Formulaires --------------------------------------------------------- */
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.champ > span {
+  color: var(--ink-soft);
+}
+
+.champ input,
+.champ select,
+.champ textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: var(--text-sm);
+  width: 100%;
+}
+
+.grille-jours {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.case-jour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.actions-formulaire {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.separateur {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: var(--space-6) 0 var(--space-4);
+}
+
+.btn--sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}

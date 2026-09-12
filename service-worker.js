@@ -11,7 +11,7 @@
   pour forcer la mise à jour du cache chez l'utilisateur.
 */
 
-const CACHE_VERSION = "gymcoach-shell-v0.8";
+const CACHE_VERSION = "gymcoach-shell-v0.9";
 
 const FICHIERS_APP_SHELL = [
   "./",
@@ -25,6 +25,10 @@ const FICHIERS_APP_SHELL = [
   "./js/config.js",
   "./js/auth.js",
   "./js/lambda.js",
+  "./js/ui.js",
+  "./js/router.js",
+  "./js/sheets.js",
+  "./js/vues/routines.js",
 ];
 
 self.addEventListener("install", (evenement) => {
