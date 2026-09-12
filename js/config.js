@@ -20,3 +20,11 @@ export const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file openid 
 // À remplir une fois la fonction Lambda créée — voir aws-lambda-setup.md.
 // Format : https://xxxxxxxxxxxxxxxxxxxxxxxxxx.lambda-url.us-east-1.on.aws/
 export const LAMBDA_FUNCTION_URL = "https://r7lladok5qept7hd7apvfermly0iztrx.lambda-url.us-east-1.on.aws/";
+
+// Numéro de version affiché discrètement dans la barre de statut (voir
+// index.html/app.js). Schéma 0.x tant qu'on est en développement ; on
+// passera à 1.y le jour où une version couvrant le périmètre complet de
+// la V1 tourne en usage réel. À incrémenter à chaque déploiement, EN
+// MÊME TEMPS que CACHE_VERSION dans service-worker.js — les deux doivent
+// toujours avancer ensemble.
+export const APP_VERSION = "0.8";

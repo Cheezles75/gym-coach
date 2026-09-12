@@ -8,6 +8,7 @@
 
 import { initAuth, login, logout, getAccessToken } from "./auth.js";
 import { verifierConnexionLambda } from "./lambda.js";
+import { APP_VERSION } from "./config.js";
 
 // --- Enregistrement du service worker ---------------------------------
 
@@ -39,6 +40,8 @@ window.addEventListener("unhandledrejection", (evenement) => {
 });
 
 console.info("[GymCoach] Scaffolding chargé.");
+
+document.getElementById("version-tag").textContent = `v${APP_VERSION}`;
 
 // --- Toast (messages non intrusifs, §11 des specs) ----------------------
 
